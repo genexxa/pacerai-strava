@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__)
 
-# Load environment variables (Render will inject them directly)
-CLIENT_ID = os.getenv("STRAVA_CLIENT")
+# Load environment variables
+CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
 CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("STRAVA_REDIRECT_URI")  # e.g., https://pacer-strava.onrender.com/callback
 
@@ -54,3 +54,6 @@ def callback():
         f"Access Token (first 10 chars): {access_token[:10]}...<br><br>"
         f"You can now close this window and return to the Pacer GPT."
     )
+
+if __name__ == "__main__":
+    app.run(debug=True)
