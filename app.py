@@ -136,6 +136,23 @@ def get_activities():
 
     return {"activities": simplified}
 
+@app.route("/users")
+def list_users():
+    users = User.query.all()
+    return {
+        "users": [
+            {
+                "id": u.id,
+                "strava_id": u.strava_id,
+                "firstname": u.firstname,
+                "lastname": u.lastname,
+                "token_expires_at": u.token_expires_at.isoformat() if u.token_expires_at else None
+            }
+            for u in users
+        ]
+    }
+
+
 # Create DB tables and run app
 if __name__ == "__main__":
     with app.app_context():
