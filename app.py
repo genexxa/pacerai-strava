@@ -43,3 +43,14 @@ def callback():
     })
 
     if token_response.status_code != 200:
+        return f"❌ Failed to exchange code: {token_response.text}", 400
+
+    tokens = token_response.json()
+    access_token = tokens.get("access_token")
+    athlete = tokens.get("athlete", {})
+
+    return (
+        f"✅ Connected as {athlete.get('firstname', 'Unknown')}!<br>"
+        f"Access Token (first 10 chars): {access_token[:10]}...<br><br>"
+        f"You can now close this window and return to the Pacer GPT."
+    )
