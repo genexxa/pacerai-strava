@@ -4,6 +4,11 @@ import os
 
 app = Flask(__name__)
 
+# ✅ PostgreSQL config
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")  # from Render
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
 # ✅ Hardcoded for production — replace with your actual domain
 REDIRECT_URI = "https://pacerai-strava.onrender.com/callback"
 CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
