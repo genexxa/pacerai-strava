@@ -42,4 +42,4 @@ def callback():
         "grant_type": "authorization_code"
     })
 
-    if token_response.status_code != 200
+    if token_response.status_code != 200:
