@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Load environment variables
 CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
 CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("https://pacer-strava.onrender.com/callback")  # e.g., https://pacer-strava.onrender.com/callback
+REDIRECT_URI = os.getenv(https://pacer-strava.onrender.com/callback)  # e.g., https://pacer-strava.onrender.com/callback
 
 @app.route("/")
 def home():
