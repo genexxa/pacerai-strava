@@ -6,6 +6,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+# ✅ Add this block right here:
+@app.route("/")
+def home():
+    return "👋 Welcome to Pacer Strava! Go to /auth to connect your account."
+
 # PostgreSQL config (Render will inject DATABASE_URL)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
