@@ -6,15 +6,33 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# ✅ PostgreSQL config
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")  # from Render
+# PostgreSQL config (Render will inject DATABASE_URL)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# ✅ Hardcoded for production — replace with your actual domain
-REDIRECT_URI = "https://pacerai-strava.onrender.com/callback"
+# Strava app config
 CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
 CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
+REDIRECT_URI = "https://pacerai-strava.onrender.com/callback"
+
+# User model
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    strava_id = db.Column(db.Integer, unique=True, nullable=False)
+    firstname = db.Column(db.String(64))
+    lastname = db.Column(db.String(64))
+    access_token = db.Column(db.String(255))
+    refresh_token = db.Column(db.String(255))
+    token_expires_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'<User {self.strava_id} - {self.firstname}>'
+
+# Create table on first request
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
 @app.route("/")
 def home():
@@ -22,7 +40,6 @@ def home():
 
 @app.route("/auth")
 def auth():
-    print("➡️ Using redirect_uri in /auth:", REDIRECT_URI)
     strava_auth_url = (
         f"https://www.strava.com/oauth/authorize?client_id={CLIENT_ID}"
         f"&response_type=code"
@@ -35,41 +52,24 @@ def auth():
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
-    error = request.args.get("error")
-    
-    if error:
-        return f"❌ Authorization failed: {error}", 400
     if not code:
-        return "❌ No code provided by Strava.", 400
+        return "❌ No code returned from Strava", 400
 
-    print("🔄 Exchanging token using redirect_uri:", REDIRECT_URI)
-    
-    # Exchange code for access token
-    token_response = requests.post("https://www.strava.com/oauth/token", data={
+    # Exchange code for token
+    response = requests.post("https://www.strava.com/oauth/token", data={
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
         "code": code,
         "grant_type": "authorization_code",
-        "redirect_uri": REDIRECT_URI  # 🔐 must match EXACTLY
+        "redirect_uri": REDIRECT_URI
     })
 
-    if token_response.status_code != 200:
-        print("❌ Token exchange failed:", token_response.text)
-        return f"❌ Failed to exchange code: {token_response.text}", 400
+    if response.status_code != 200:
+        return f"❌ Failed to exchange code: {response.text}", 400
 
-    tokens = token_response.json()
-    access_token = tokens.get("access_token")
-    athlete = tokens.get("athlete", {})
+    data = response.json()
+    athlete = data['athlete']
+    expires_at = datetime.utcfromtimestamp(data['expires_at'])
 
-    print("✅ Successfully connected athlete:", athlete.get("username", "unknown"))
-
-    return (
-        f"✅ Connected as {athlete.get('firstname', 'Unknown')}!<br>"
-        f"Access Token (first 10 chars): {access_token[:10]}...<br><br>"
-        f"You can now close this window and return to the Pacer GPT."
-    )
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Starting Flask app on port {port} with host 0.0.0.0")
-    app.run(host="0.0.0.0", port=port)
+    # Store or update user
+    user = User.query.filter_by(strava_id=athlete['id']).f
